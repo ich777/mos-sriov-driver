@@ -59,7 +59,7 @@ jobs:
 
           # Create DEBIAN control file
           cat > ${PKG_DIR}/DEBIAN/control << EOF
-          Package: sriov-driver
+          Package: sriov-driver-plugin
           Version: ${VERSION}-1+mos-plugin
           Architecture: amd64
           Maintainer: admin@minenet.at
