@@ -8,9 +8,9 @@ mos-sriov-driver provides a **MOS plugin** for managing the SR-IOV i915 driver.
 
 This repository contains the **MOS plugin implementation**, optional helper
 functions, and configuration files (such as `settings.json`) required to
-integrate DVB driver management into MOS.
+integrate SR-IOV driver management into MOS.
 
-The plugin enables MOS to download and install DVB drivers on demand directly
+The plugin enables MOS to download and install SR-IOV drivers on demand directly
 onto the system.
 
 ### Driver Source
