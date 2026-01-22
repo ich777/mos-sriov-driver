@@ -105,7 +105,9 @@ check_sriov() {
   fi
   if [ -f "/sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs" ] ; then
     VFS_NUM="$(jq -r '.vfs_number // 2' $PLG_DIR/settings.json 2>/dev/null)"
-    echo $VFS_NUM > /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs
+    if [ "$VFS_NUM" != "$(/sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs)" ] ; then
+      echo $VFS_NUM > /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs 2>/dev/null
+    fi
   fi
 }
 
