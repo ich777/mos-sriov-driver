@@ -54,6 +54,10 @@ jobs:
           mkdir -p ${PKG_DIR}/var/www/mos-plugins/sriov-driver
           mkdir -p ${PKG_DIR}/DEBIAN
 
+          # Copy get_dvb_devices script
+          cp sriov ${PKG_DIR}/usr/bin/plugins/sriov
+          chmod +x ${PKG_DIR}/usr/bin/plugins/sriov
+
           # Copy Vue plugin
           cp -R page/dist/sriov-driver/* ${PKG_DIR}/var/www/mos-plugins/sriov-driver/
 
