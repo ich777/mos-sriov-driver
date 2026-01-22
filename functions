@@ -96,6 +96,26 @@ check_deb() {
   fi
 }
 
+# Make sure all files are in place
+check_sriov() {
+  if ! grep -q "blacklist" /boot/optional/modprobe.d/i915.conf 2>/dev/null ; then
+    [ ! -d /boot/optional/modprobe.d ] && \
+      mkdir -p /boot/optional/modprobe.d
+    echo "blacklist i915" >> /boot/optional/modprobe.d/i915.conf
+  fi
+  if [ -f "/sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs" ] ; then
+    VFS_NUM="$(jq -r '.vfs_number // 2' $PLG_DIR/settings.json 2>/dev/null)"
+    echo $VFS_NUM > /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs
+  fi
+}
+
+# modprobe i915 driver with SRIOV flags
+modprobe_driver() {
+  if ! lsmod | grep -q i915 ; then
+    modprobe i915 enable_guc=3 max_vfs=7 >/dev/null 2>&1
+  fi
+}
+
 ################################################
 # END OF DRIVER SPECIFIC PLUGIN BASE FUNCTIONS #
 ################################################
@@ -109,7 +129,6 @@ driver_download() {
     UNAME="$1"
   fi
   # Get driver settings and selected package
-  SETTINGS_JSON="$(cat $PLG_DIR/settings.json 2>/dev/null)"
   DRIVER_PKG="sriov"
   DRV_DIR="$DRV_PLG_DIR/$UNAME"
 
@@ -152,18 +171,22 @@ driver_download() {
 
 install() {
   driver_download
+  check_sriov
   install_driver
+  modprobe_driver
 }
 
 mos_start() {
   # Get driver settings and selected package
   UNAME="$(uname -r)"
-  SETTINGS_JSON="$(cat $PLG_DIR/settings.json 2>/dev/null)"
   DRIVER_PKG="sriov"
   DRV_DIR="$DRV_PLG_DIR/$UNAME"
 
   # Check for old Kernel versions
   check_old_kernel_directories "$UNAME"
+
+  # Check if everything is configured properly
+  check_sriov
 
   # Check if driver needs to be installed
   if ! modinfo i915 2>/dev/null | grep -qi sriov ; then
@@ -177,8 +200,23 @@ mos_start() {
       install_driver
     fi
   fi
+
+  # modprobe i915 driver
+  modprobe_driver
+}
+
+plugin_update() {
+  check_sriov
 }
 
 mos_osupdate() {
   driver_download "$1"
+}
+
+uninstall() {
+  if [ "$(grep -v "blacklist" /boot/optional/modprobe.d/i915.conf 2>/dev/null)" ] ; then
+    sed -i '/blacklist i915/d' /boot/optional/modprobe.d/i915.conf 2>/dev/null
+  else
+    rm -rf /boot/optional/modprobe.d/i915.conf 2>/dev/null
+  fi
 }
