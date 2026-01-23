@@ -6,9 +6,7 @@
       <v-card-title>SR-IOV Status</v-card-title>
       <v-card-text class="pa-4">
         <v-alert type="warning" variant="tonal">
-          SR-IOV is not active or not supported on this system.
-
-          (You have to reboot once after the first installation)
+          SR-IOV is not active or not supported on this system.<br/>(You have to reboot once after the first installation)
         </v-alert>
       </v-card-text>
     </v-card>
@@ -139,7 +137,7 @@ const checkSriovSupport = async () => {
       },
       body: JSON.stringify({
         command: 'sriov',
-        args: ['check_sriov'],
+        args: ['check'],
         timeout: 10,
         parse_json: true,
       }),
