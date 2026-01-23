@@ -47,7 +47,7 @@ export default defineConfig({
       exposes: {
         './Plugin': './src/Plugin.vue',
       },
-      shared: ['vue', 'vue-sonner', 'vuetify', 'vuetify/components'],
+      shared: ['vue'],
     }),
     generateManifest(),
   ],
@@ -59,7 +59,6 @@ export default defineConfig({
     assetsDir: '',
     rollupOptions: {
       input: {},
-      external: ['vue-sonner', 'vuetify/components'],
-    },
+          },
   },
 });
