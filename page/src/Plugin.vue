@@ -6,7 +6,8 @@
       <v-card-title>SR-IOV Status</v-card-title>
       <v-card-text class="pa-4">
         <v-alert type="warning" variant="tonal">
-          SR-IOV is not active or not supported on this system.<br/>
+          SR-IOV is not active or not supported on this system.
+
           (You have to reboot once after the first installation)
         </v-alert>
       </v-card-text>
@@ -36,7 +37,6 @@
           </v-btn>
         </v-card-actions>
       </v-card>
-
       <v-card class="mb-4 pa-0">
         <v-card-title>Installed Driver</v-card-title>
         <v-card-text class="pa-4">
@@ -74,7 +74,6 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, onMounted } from 'vue';
 
@@ -83,10 +82,15 @@ const PLUGIN_NAME = 'sriov-driver';
 const loading = ref(true);
 const updating = ref(false);
 const sriovSupported = ref(false);
+
 const driverInfo = ref(null);
 const settings = ref({ vfs_number: 1 });
+
 const selectedVfs = ref(1);
 const vfsOptions = [0, 1, 2, 3, 4, 5, 6, 7];
+
+// optional aber hilfreich: UI/Debug Fehlerzustand
+const initError = ref(null);
 
 const getAuthHeaders = () => ({
   Authorization: 'Bearer ' + localStorage.getItem('authToken'),
@@ -97,6 +101,7 @@ const fetchDriverInfo = async () => {
     const res = await fetch(`/api/v1/mos/plugins/driver/${PLUGIN_NAME}`, {
       headers: getAuthHeaders(),
     });
+
     if (res.ok) {
       driverInfo.value = await res.json();
     } else {
@@ -113,10 +118,11 @@ const fetchSettings = async () => {
     const res = await fetch(`/api/v1/mos/plugins/settings/${PLUGIN_NAME}`, {
       headers: getAuthHeaders(),
     });
+
     if (res.ok) {
       const data = await res.json();
       settings.value = data;
-      selectedVfs.value = data.vfs_number || 1;
+      selectedVfs.value = data.vfs_number ?? 1;
     }
   } catch (e) {
     console.error('Failed to fetch settings:', e);
@@ -133,18 +139,19 @@ const checkSriovSupport = async () => {
       },
       body: JSON.stringify({
         command: 'sriov',
-        args: ['check'],
+        args: ['check_sriov'],
         timeout: 10,
         parse_json: true,
       }),
     });
 
-    if (res.ok) {
-      const data = await res.json();
-      sriovSupported.value = data.success === true;
-    } else {
+    if (!res.ok) {
       sriovSupported.value = false;
+      return;
     }
+
+    const data = await res.json();
+    sriovSupported.value = data.success === true;
   } catch (e) {
     console.error('Failed to check SR-IOV support:', e);
     sriovSupported.value = false;
@@ -174,7 +181,6 @@ const updateVfs = async () => {
     }
 
     const queryData = await queryRes.json();
-    
     if (!queryData.success) {
       console.error('sriov set_vfs command failed:', queryData);
       return;
@@ -203,13 +209,20 @@ const updateVfs = async () => {
 };
 
 onMounted(async () => {
+  loading.value = true;
+  initError.value = null;
+
   try {
     await checkSriovSupport();
+
     if (sriovSupported.value) {
       await Promise.all([fetchDriverInfo(), fetchSettings()]);
+    } else {
+      driverInfo.value = null;
     }
   } catch (e) {
     console.error('Failed to initialize:', e);
+    initError.value = e;
   } finally {
     loading.value = false;
   }
