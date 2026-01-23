@@ -182,17 +182,14 @@ const updateVfs = async () => {
     });
 
     if (!queryRes.ok) {
-      showSnackbarError(`Failed to execute command (HTTP ${queryRes.status})`);
+      showSnackbarError('Failed to set VFS');
       return;
     }
 
     const queryData = await queryRes.json();
 
     if (!queryData.success) {
-      const msg =
-        queryData.output?.trim() ||
-        `SR-IOV command failed (exit code ${queryData.exit_code ?? '-'})`;
-      showSnackbarError(msg);
+      showSnackbarError('Failed to set VFS');
       return;
     }
 
