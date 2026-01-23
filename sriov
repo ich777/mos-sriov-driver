@@ -9,7 +9,7 @@ check_sriov() {
   if modinfo i915 2>/dev/null | grep -qi "sriov" ; then
     exit 0
   else
-    echo 1
+    exit 1
   fi
 }
 
