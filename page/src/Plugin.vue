@@ -69,13 +69,14 @@
         </v-card-text>
       </v-card>
     </div>
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="6000">
+      {{ snackbar.text }}
+    </v-snackbar>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, h } from 'vue';
-import { toast } from 'vue-sonner';
-import { VIcon } from 'vuetify/components';
+import { ref, onMounted } from 'vue';
 
 const PLUGIN_NAME = 'sriov-driver';
 
@@ -91,22 +92,13 @@ const vfsOptions = [0, 1, 2, 3, 4, 5, 6, 7];
 
 const initError = ref(null);
 
+const snackbar = ref({ show: false, text: '', color: 'success' });
 const showSnackbarError = (text, errorText = '') => {
-  toast.error(text, {
-    description: errorText || undefined,
-    duration: errorText ? Infinity : 3000,
-    icon: h(VIcon, { icon: 'mdi-alert-circle' }),
-    cancel: { label: 'Close' },
-    toasterId: 'bottom-toaster',
-  });
+  const message = errorText ? `${text}: ${errorText}` : text;
+  snackbar.value = { show: true, text: message, color: 'error' };
 };
-
 const showSnackbarSuccess = (text) => {
-  toast.success(text, {
-    duration: 3000,
-    icon: h(VIcon, { icon: 'mdi-check-circle' }),
-    toasterId: 'bottom-toaster',
-  });
+  snackbar.value = { show: true, text, color: 'success' };
 };
 
 const getAuthHeaders = () => ({
