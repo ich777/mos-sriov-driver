@@ -6,7 +6,7 @@
       <v-card-title>SR-IOV Status</v-card-title>
       <v-card-text class="pa-4">
         <v-alert type="warning" variant="tonal">
-          SR-IOV is not active or not supported on this system.<br/>(You have to reboot once after the first installation)
+          SR-IOV is not active or not supported on this system (you have to reboot once after the first installation).
         </v-alert>
       </v-card-text>
     </v-card>
@@ -26,11 +26,7 @@
         <v-divider />
         <v-card-actions class="pa-4">
           <v-spacer />
-          <v-btn
-            color="onPrimary"
-            :loading="updating"
-            @click="updateVfs"
-          >
+          <v-btn color="onPrimary" :loading="updating" @click="updateVfs">
             Update
           </v-btn>
         </v-card-actions>
@@ -38,7 +34,10 @@
       <v-card class="mb-4 pa-0">
         <v-card-title>Installed Driver</v-card-title>
         <v-card-text class="pa-4">
-          <div v-if="!driverInfo || !driverInfo.package" class="text-center text-grey py-4">
+          <div
+            v-if="!driverInfo || !driverInfo.package"
+            class="text-center text-grey py-4"
+          >
             No driver installed
           </div>
           <v-row v-else dense>
@@ -70,8 +69,12 @@
         </v-card-text>
       </v-card>
     </div>
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="6000">
+      {{ snackbar.text }}
+    </v-snackbar>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue';
 
@@ -87,8 +90,12 @@ const settings = ref({ vfs_number: 1 });
 const selectedVfs = ref(1);
 const vfsOptions = [0, 1, 2, 3, 4, 5, 6, 7];
 
-// optional aber hilfreich: UI/Debug Fehlerzustand
 const initError = ref(null);
+
+const snackbar = ref({ show: false, text: '', color: 'success' });
+const showSnack = (text, color = 'error') => {
+  snackbar.value = { show: true, text, color };
+};
 
 const getAuthHeaders = () => ({
   Authorization: 'Bearer ' + localStorage.getItem('authToken'),
@@ -100,11 +107,8 @@ const fetchDriverInfo = async () => {
       headers: getAuthHeaders(),
     });
 
-    if (res.ok) {
-      driverInfo.value = await res.json();
-    } else {
-      driverInfo.value = null;
-    }
+    if (res.ok) driverInfo.value = await res.json();
+    else driverInfo.value = null;
   } catch (e) {
     console.error('Failed to fetch driver info:', e);
     driverInfo.value = null;
@@ -174,13 +178,17 @@ const updateVfs = async () => {
     });
 
     if (!queryRes.ok) {
-      console.error('Failed to execute sriov set_vfs command');
+      showSnack(`Failed to execute command (HTTP ${queryRes.status})`, 'error');
       return;
     }
 
     const queryData = await queryRes.json();
+
     if (!queryData.success) {
-      console.error('sriov set_vfs command failed:', queryData);
+      const msg =
+        queryData.output?.trim() ||
+        `SR-IOV command failed (exit code ${queryData.exit_code ?? '-'})`;
+      showSnack(msg, 'error');
       return;
     }
 
@@ -195,12 +203,17 @@ const updateVfs = async () => {
       }),
     });
 
-    if (settingsRes.ok) {
-      settings.value.vfs_number = selectedVfs.value;
-      await Promise.all([fetchDriverInfo(), fetchSettings()]);
+    if (!settingsRes.ok) {
+      showSnack(`Failed to save settings (HTTP ${settingsRes.status})`, 'error');
+      return;
     }
+
+    settings.value.vfs_number = selectedVfs.value;
+    await Promise.all([fetchDriverInfo(), fetchSettings()]);
+    showSnack('VFs updated successfully', 'success');
   } catch (e) {
     console.error('Failed to update VFS:', e);
+    showSnack(`Update failed: ${String(e)}`, 'error');
   } finally {
     updating.value = false;
   }
@@ -221,6 +234,7 @@ onMounted(async () => {
   } catch (e) {
     console.error('Failed to initialize:', e);
     initError.value = e;
+    showSnack(`Initialization failed: ${String(e)}`, 'error');
   } finally {
     loading.value = false;
   }
