@@ -32,13 +32,13 @@
         </v-card-actions>
       </v-card>
       <v-card class="mb-4 pa-0">
-        <v-card-title>Installed Driver</v-card-title>
+        <v-card-title>Locally Available Driver Package</v-card-title>
         <v-card-text class="pa-4">
           <div
             v-if="!driverInfo || !driverInfo.package"
             class="text-center text-grey py-4"
           >
-            No driver installed
+            No Locally Available Driver Package found
           </div>
           <v-row v-else dense>
             <v-col cols="6" md="3">
