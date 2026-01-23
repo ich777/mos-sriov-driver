@@ -69,14 +69,13 @@
         </v-card-text>
       </v-card>
     </div>
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="6000">
-      {{ snackbar.text }}
-    </v-snackbar>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, h } from 'vue';
+import { toast } from 'vue-sonner';
+import { VIcon } from 'vuetify/components';
 
 const PLUGIN_NAME = 'sriov-driver';
 
@@ -92,9 +91,22 @@ const vfsOptions = [0, 1, 2, 3, 4, 5, 6, 7];
 
 const initError = ref(null);
 
-const snackbar = ref({ show: false, text: '', color: 'success' });
-const showSnack = (text, color = 'error') => {
-  snackbar.value = { show: true, text, color };
+const showSnackbarError = (text, errorText = '') => {
+  toast.error(text, {
+    description: errorText || undefined,
+    duration: errorText ? Infinity : 3000,
+    icon: h(VIcon, { icon: 'mdi-alert-circle' }),
+    cancel: { label: 'Close' },
+    toasterId: 'bottom-toaster',
+  });
+};
+
+const showSnackbarSuccess = (text) => {
+  toast.success(text, {
+    duration: 3000,
+    icon: h(VIcon, { icon: 'mdi-check-circle' }),
+    toasterId: 'bottom-toaster',
+  });
 };
 
 const getAuthHeaders = () => ({
@@ -178,7 +190,7 @@ const updateVfs = async () => {
     });
 
     if (!queryRes.ok) {
-      showSnack(`Failed to execute command (HTTP ${queryRes.status})`, 'error');
+      showSnackbarError(`Failed to execute command (HTTP ${queryRes.status})`);
       return;
     }
 
@@ -188,7 +200,7 @@ const updateVfs = async () => {
       const msg =
         queryData.output?.trim() ||
         `SR-IOV command failed (exit code ${queryData.exit_code ?? '-'})`;
-      showSnack(msg, 'error');
+      showSnackbarError(msg);
       return;
     }
 
@@ -204,16 +216,16 @@ const updateVfs = async () => {
     });
 
     if (!settingsRes.ok) {
-      showSnack(`Failed to save settings (HTTP ${settingsRes.status})`, 'error');
+      showSnackbarError(`Failed to save settings (HTTP ${settingsRes.status})`);
       return;
     }
 
     settings.value.vfs_number = selectedVfs.value;
     await Promise.all([fetchDriverInfo(), fetchSettings()]);
-    showSnack('VFs updated successfully', 'success');
+    showSnackbarSuccess('VFs updated successfully');
   } catch (e) {
     console.error('Failed to update VFS:', e);
-    showSnack(`Update failed: ${String(e)}`, 'error');
+    showSnackbarError('Update failed', String(e));
   } finally {
     updating.value = false;
   }
@@ -234,7 +246,7 @@ onMounted(async () => {
   } catch (e) {
     console.error('Failed to initialize:', e);
     initError.value = e;
-    showSnack(`Initialization failed: ${String(e)}`, 'error');
+    showSnackbarError('Initialization failed', String(e));
   } finally {
     loading.value = false;
   }
