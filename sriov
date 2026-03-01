@@ -2,7 +2,7 @@
 
 # Set functions
 set_vfs_num() {
-  echo ${1} > /sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs
+  echo $1 > "/sys/devices/pci0000:00/0000:00:02.0/sriov_numvfs"
 }
 
 check_sriov() {
@@ -16,7 +16,6 @@ check_sriov() {
 # Execute functions depending on what was passed over
 if [ "$1" == "check" ] ; then
   check_sriov
-else
-  [ ! -z "$3" ] && \
-    set_vfs_num $3
+elif [ "$1" == "set_vfs" ] ; then
+    set_vfs_num $2
 fi
