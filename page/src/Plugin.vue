@@ -128,7 +128,7 @@ const fetchSettings = async () => {
     if (res.ok) {
       const data = await res.json();
       settings.value = data;
-      selectedVfs.value = data.vfs_number ?? 1;
+      selectedVfs.value = Number(data.vfs_number ?? 1);
     }
   } catch (e) {
     console.error('Failed to fetch settings:', e);
@@ -175,7 +175,7 @@ const updateVfs = async () => {
       },
       body: JSON.stringify({
         command: 'sriov',
-        args: ['set_vfs', selectedVfs.value],
+        args: ['set_vfs', String(selectedVfs.value)],
         timeout: 10,
         parse_json: true,
       }),
