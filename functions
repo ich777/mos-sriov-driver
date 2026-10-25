@@ -176,6 +176,7 @@ install() {
   check_sriov
   install_driver
   modprobe_driver
+  echo "SR-IOV i915/xe Driver Plugin" >> /var/mos/reboot_pending
 }
 
 mos_start() {
